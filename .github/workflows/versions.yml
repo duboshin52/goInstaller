@@ -1,0 +1,56 @@
+# Сводка версий для всего клуба: одна на всех вместо того, чтобы каждый
+# сервер опрашивал шесть репозиториев сам. Собирает её сам goInstaller
+# (`go-installer.sh --digest`) тем же кодом, что и на сервере; публикует —
+# в ветку versions этого репозитория, файл versions.txt. Серверы берут её
+# таймером сводки при входе одним условным запросом (304 лимит не тратит).
+#
+# Нужен секрет GOINST_READ_TOKEN — ключ, который читает все шесть закрытых
+# репозиториев продуктов и этот. Лучше отдельный fine-grained токен только
+# на чтение (Contents: Read-only, Metadata: Read-only), а не ключ клуба:
+# тогда замена ключа клуба сводку не ломает.
+#
+# Раз в час, в :23 (решение заказчика 29.09). Не в :00: в начале часа у
+# GitHub очередь, и запуски по расписанию опаздывают или теряются. На деле
+# GitHub запускает расписание раз в 3–9 часов (10–14.10), поэтому сводка
+# публикуется при каждом запуске, если прошлой больше двух часов, — иначе
+# она дожила бы до 12 часов, после которых серверы ей не верят.
+# Цена: каждый запуск — минута Actions (округление вверх), раз в час —
+# около 720 минут в месяц.
+name: versions
+
+on:
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: versions
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Собрать сводку
+        env:
+          GH_TOKEN: ${{ secrets.GOINST_READ_TOKEN }}
+          GOINST_DIR: ${{ runner.temp }}/goinst
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Нет секрета GOINST_READ_TOKEN — сводку собрать нечем"
+            exit 1
+          fi
+          bash go-installer.sh --digest > "$RUNNER_TEMP/versions.txt"
+          cat "$RUNNER_TEMP/versions.txt"
+
+      - name: Опубликовать в ветку versions
+        run: bash .github/versions-publish.sh "$RUNNER_TEMP/versions.txt"

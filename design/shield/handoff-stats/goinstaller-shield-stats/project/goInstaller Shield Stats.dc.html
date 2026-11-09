@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#e7e5e0}a{color:#2a668f}a:hover{color:#1b4a6b}</style>
+<script src="shield-screens.js"></script>
+<script src="menu-screens.js"></script>
+</helmet>
+<div style="display:flex;flex-direction:column;gap:18px;padding:24px 28px 48px;box-sizing:border-box;min-height:100vh;font-family:'IBM Plex Sans',Helvetica,sans-serif;color:#1d1d1b">
+  <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 20px">
+    <div style="font-size:22px;font-weight:600">goInstaller 1.2.3 — главное меню и «Защита от сканеров»</div>
+    <div style="font-size:14px;color:#55534e">Направление «Аркада». Клавиши как в жизни: ↑↓ ←→ Enter, цифры, буквы пунктов, PgUp PgDn, 0, Esc, q.</div>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px 18px">
+    <sc-for list="{{ groups }}" as="g" hint-placeholder-count="11">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b6962">{{ g.label }}</div>
+        <div style="display:flex;gap:0">
+          <sc-for list="{{ g.opts }}" as="o"><button onClick="{{ o.on }}" onMouseDown="{{ noFocus }}" style="{{ o.style }}">{{ o.label }}</button></sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+    <div style="flex:0 0 240px;display:flex;flex-direction:column;gap:2px">
+      <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#6b6962;padding:0 8px 4px">Экраны</div>
+      <sc-for list="{{ jumps }}" as="j" hint-placeholder-count="9">
+        <button onClick="{{ j.on }}" onMouseDown="{{ noFocus }}" style="{{ j.style }}"><span style="font:700 12px 'JetBrains Mono',monospace;color:#2a668f;min-width:38px">{{ j.id }}</span><span>{{ j.label }}</span></button>
+      </sc-for>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;min-width:0;max-width:100%">
+      <div style="font:400 12px 'JetBrains Mono',monospace;color:#55534e">{{ termLabel }}</div>
+      <div style="{{ boardStyle }}">
+        <div style="{{ gridStyle }}"><sc-for list="{{ rows }}" as="r"><div style="height:17px;white-space:pre"><sc-for list="{{ r.spans }}" as="s"><span style="{{ s.style }}">{{ s.t }}</span></sc-for></div></sc-for></div>
+      </div>
+      <sc-if value="{{ hasFlash }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:13px;color:#55534e">{{ flash }}</div>
+      </sc-if>
+    </div>
+    <div style="flex:1 1 260px;max-width:360px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;flex-direction:column;gap:6px;background:#f4f3ef;border:1px solid #d3d0c9;border-radius:8px;padding:14px">
+        <div style="font-size:13px;font-weight:600">Клавиши этого экрана</div>
+        <sc-for list="{{ keymap }}" as="k">
+          <div style="display:grid;grid-template-columns:92px minmax(0,1fr);gap:8px;font-size:13px;line-height:1.4">
+            <span style="font:700 12px 'JetBrains Mono',monospace;color:#2a668f">{{ k.k }}</span>
+            <span style="color:#3a3935">{{ k.d }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ hasChanges }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:6px;background:#f4f3ef;border:1px solid #d3d0c9;border-radius:8px;padding:14px">
+          <div style="font-size:13px;font-weight:600">Что меняется против эталона</div>
+          <sc-for list="{{ changes }}" as="c"><div style="font-size:13px;line-height:1.45;color:#3a3935;text-wrap:pretty">{{ c }}</div></sc-for>
+        </div>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;gap:8px;background:#f4f3ef;border:1px solid #d3d0c9;border-radius:8px;padding:14px">
+        <div style="font-size:13px;font-weight:600">Спецификация для bash</div>
+        <div style="font-size:13px;line-height:1.45;color:#55534e">Как в arcade_ru.json: строка — массив сегментов [текст, токен], выделенное — «+sel». Файлы: spec/screens/arcade_shield_*.json, arcade_menu_*.json.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <button onClick="{{ toggleJson }}" onMouseDown="{{ noFocus }}" style="font:500 13px 'IBM Plex Sans',sans-serif;padding:6px 10px;border-radius:6px;border:1px solid #c9c6bf;background:#ffffff;color:#1d1d1b;cursor:pointer">{{ jsonBtn }}</button>
+          <button onClick="{{ downloadAll }}" onMouseDown="{{ noFocus }}" style="font:500 13px 'IBM Plex Sans',sans-serif;padding:6px 10px;border-radius:6px;border:1px solid #c9c6bf;background:#ffffff;color:#1d1d1b;cursor:pointer">Скачать все экраны (JSON)</button>
+        </div>
+        <sc-if value="{{ showJson }}" hint-placeholder-val="{{ false }}">
+          <pre style="margin:0;max-height:360px;overflow:auto;font:400 11px/1.4 'JetBrains Mono',monospace;background:#ffffff;border:1px solid #d3d0c9;border-radius:6px;padding:10px;white-space:pre">{{ json }}</pre>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+    <div style="display:flex;flex-direction:column;gap:8px;max-width:480px">
+      <div style="font-size:15px;font-weight:600">Новые символы и замена ASCII</div>
+      <div style="font-size:12px;line-height:1.45;color:#55534e;text-wrap:pretty">Пирамида: полосы █, половинка на конце ▐ слева и ▌ справа, самое малое значение — ▕ и ▏. Сетка ┊ на круглых значениях. Столбики и спарклайны — ▁▂▃▅▇█. Замена — одна клетка.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <sc-for list="{{ symbols }}" as="y"><div style="display:flex;gap:6px;align-items:center;font:400 13px 'JetBrains Mono',monospace;background:#f4f3ef;border:1px solid #d3d0c9;border-radius:5px;padding:3px 7px"><span>{{ y.u }}</span><span style="color:#8a8880">→</span><span style="font-weight:700">{{ y.a }}</span></div></sc-for>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;min-width:0;max-width:100%;overflow-x:auto">
+      <div style="font-size:15px;font-weight:600">Новые токены</div>
+      <div style="display:grid;grid-template-columns:repeat(7,auto);width:max-content;gap:0;font-size:12px;border:1px solid #d3d0c9;border-radius:8px;overflow:hidden;background:#f4f3ef">
+        <sc-for list="{{ tokHead }}" as="h"><div style="padding:7px 10px;font-weight:600;background:#e9e7e2;border-bottom:1px solid #d3d0c9">{{ h }}</div></sc-for>
+        <sc-for list="{{ tokCells }}" as="c"><div style="{{ c.style }}"><sc-if value="{{ c.sw }}"><span style="{{ c.swStyle }}"></span></sc-if><span>{{ c.t }}</span></div></sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const PAL = {
+  dark: { bg:'#1e1e1e', title:{c:'#ffd23f',b:1}, text:{c:'#e6e9f5'}, muted:{c:'#8e96b8'}, rule:{c:'#3d6bff'}, name:{c:'#ffffff'}, cursor:{c:'#34d2ff',b:1}, key:{c:'#34d2ff'}, ok:{c:'#3ee07a'}, update:{c:'#ffb02e',b:1}, new:{c:'#ff5fd2',b:1}, warn:{c:'#ff9a3c'}, err:{c:'#ff4d5e',b:1}, sel:{bg:'#1d3aa8',fg:'#ffffff'}, grad:['#2f6bff','#34d2ff'], shadow:{c:'#343a66'}, in:{c:'#1fb6ff'}, out:{c:'#9fe3ff'} },
+  light:{ bg:'#ffffff', title:{c:'#0038b8',b:1}, text:{c:'#1a1f3a'}, muted:{c:'#565e80'}, rule:{c:'#2f5bdc'}, name:{c:'#0d1230'}, cursor:{c:'#0068a8',b:1}, key:{c:'#0068a8'}, ok:{c:'#16803e'}, update:{c:'#9a5a00',b:1}, new:{c:'#b0158a',b:1}, warn:{c:'#a44a00'}, err:{c:'#c0182e',b:1}, sel:{bg:'#dfe7ff'}, grad:['#1d4ed8','#0086b8'], shadow:{c:'#c3c9e6'}, in:{c:'#0068a8'}, out:{c:'#4a97c9'} }
+};
+const A16 = { title:{c:'33',b:1}, text:{c:'39'}, muted:{c:'90'}, rule:{c:'34'}, name:{c:'39',b:1}, cursor:{c:'36',b:1}, key:{c:'36'}, ok:{c:'32'}, update:{c:'33',b:1}, new:{c:'35',b:1}, warn:{c:'33'}, err:{c:'31',b:1}, grad:{c:'34',b:1}, sel:{inv:1}, shadow:{c:'34',dim:1}, in:{c:'36'}, out:{c:'96'} };
+const NONE = { title:'bold', text:'', muted:'dim', rule:'dim', name:'', cursor:'bold', key:'bold', ok:'', update:'bold', new:'bold', warn:'bold', err:'bold', grad:'bold', shadow:'dim', in:'', out:'' };
+const ANSI = {
+  dark: { '31':'#f14c4c','32':'#23d18b','33':'#e5e510','34':'#3b8eea','35':'#d670d6','36':'#29b8db','90':'#8a8a8a','96':'#5ee7ff' },
+  light:{ '31':'#b40000','32':'#00a600','33':'#999900','34':'#0000b2','35':'#b200b2','36':'#00a6b2','90':'#666666','96':'#0083a6' }
+};
+const FG = { dark:'#cccccc', light:'#1a1a1a' };
+const hex = h => [1,3,5].map(i => parseInt(h.slice(i, i + 2), 16));
+const toHex = a => '#' + a.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+const interp = (st, tt) => { const a = hex(st[0]), b = hex(st[1]); return toHex(a.map((v, k) => v + (b[k] - v) * tt)); };
+const blend = (a, b, f) => { const A = hex(a), B = hex(b); return toHex(A.map((v, i) => v + (B[i] - v) * f)); };
+const CUBE = [0, 95, 135, 175, 215, 255], Q = {};
+function q256(h) {
+  if (Q[h]) return Q[h];
+  const [R, G, B] = hex(h); let best = null;
+  const test = (i, rgb) => { const d = (rgb[0]-R)**2 + (rgb[1]-G)**2 + (rgb[2]-B)**2; if (!best || d < best.d) best = { d, i, hex: toHex(rgb) }; };
+  for (let ri = 0; ri < 6; ri++) for (let gi = 0; gi < 6; gi++) for (let bi = 0; bi < 6; bi++) test(16 + 36*ri + 6*gi + bi, [CUBE[ri], CUBE[gi], CUBE[bi]]);
+  for (let g = 0; g < 24; g++) { const v = 8 + 10*g; test(232 + g, [v, v, v]); }
+  return (Q[h] = best);
+}
+const ASC = { '─':'-','━':'-','│':'|','┌':'+','┐':'+','└':'+','┘':'+','├':'+','┤':'+','┬':'+','┴':'+','┼':'+','╭':'+','╮':'+','╰':'+','╯':'+','═':'=','║':'|','╔':'+','╗':'+','╚':'+','╝':'+',
+  '█':'#','▓':'#','▒':'=','░':'.','▀':'"','▄':'_','▌':'[','▐':']','▏':'=','▎':'=','▍':'=','▋':'=','▊':'=','▉':'=','▕':']',
+  '●':'*','○':'o','▲':'^','▼':'V','▸':'>','◆':'~','✓':'v','✗':'x','✚':'+','·':'.','→':'>','←':'<','↑':'^','↓':'v','…':'.','—':'-','«':'"','»':'"','–':'-' };
+const NEWSYM = ['┊','▁','▂','▃','▅','▇','▐','▌','▕','▏'];
+const RUKEYS = { 'й':'q', 'Й':'q', 'ы':'s', 'Ы':'s', 'с':'c', 'С':'c', 'ч':'x', 'Ч':'x', 'г':'u', 'Г':'u' };
+const JUMPS = [['g','Главное меню'],['sh-a','Уведомление, защита вкл'],['sh-b','Уведомление, защита выкл'],['sh-c','Уведомление, всё тихо'],['sh-d','Меню «Защита» (s)'],['sh-e','Статистика'],['sh-g','Топ-30 сканеров'],['sh-h','Настройки статистики'],['sh-f','Без tty, вывод в файл']];
+const ranges = a => { const o = []; a.forEach(n => { const l = o[o.length - 1]; if (l && n === l[1] + 1) l[1] = n; else o.push([n, n]); }); return o.map(x => x[0] === x[1] ? String(x[0]) : x[0] + '–' + x[1]).join(', '); };
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    let S = { scr:'g', cols:80, color:'true', bg:'dark', cs:'utf8', lang:'ru', layout:'panels', variant:'A', chart:'fly', on:true, vk:true, spike:true };
+    try { const j = JSON.parse(localStorage.getItem('goShieldProto2') || 'null'); if (j) S = { ...S, ...j }; } catch (e) {}
+    this.state = { S, cur:10, view:0, row:null, crow:6, confirm:false, reset:false, back:[], flash:'', showJson:false, ready: typeof window !== 'undefined' && !!window.GoShield && !!window.GoMenu };
+  }
+  componentDidMount() {
+    if (!this.state.ready) this.wait = setInterval(() => { if (window.GoShield && window.GoMenu) { clearInterval(this.wait); this.setState({ ready:true }); } }, 50);
+    this.onKey = e => {
+      const tg = (e.target && e.target.tagName) || '';
+      if (/INPUT|TEXTAREA|SELECT/.test(tg) || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (this.handleKey(RUKEYS[e.key] || e.key)) e.preventDefault();
+    };
+    window.addEventListener('keydown', this.onKey);
+  }
+  componentWillUnmount() { window.removeEventListener('keydown', this.onKey); clearInterval(this.wait); }
+  setS(patch, extra) { this.setState(s => ({ S: { ...s.S, ...patch }, ...(extra || {}) }), () => { try { localStorage.setItem('goShieldProto2', JSON.stringify(this.state.S)); } catch (e) {} }); }
+  say(ru, en) { this.setState({ flash: this.state.S.lang === 'en' ? en : ru }); }
+  go(scr, extra) { this.setState(s => ({ back: [...s.back, s.S.scr] })); this.setS({ scr }, { flash:'', ...(extra || {}) }); }
+  back() { const b = this.state.back; const prev = b.length ? b[b.length - 1] : (this.state.S.scr === 'sh-d' ? 'g' : 'sh-d'); this.setState({ back: b.slice(0, -1) }); this.setS({ scr: prev }, { flash:'', confirm:false, reset:false, cur: prev === 'g' ? 10 : prev === 'sh-d' ? 5 : 0, row:null }); }
+  opts() { const { S, cur, view, row, crow, confirm, reset } = this.state; return { lang:S.lang, C:S.cols, on:S.on, vk:S.vk, chart:S.chart, spike:S.spike, ver:'1.2.3', cur, view, row, confirm, reset, layout:S.layout, variant:S.variant, crow }; }
+  menuAct(it) {
+    if (!it) return;
+    if (it.shield) { this.go('sh-d', { cur:0 }); return; }
+    if (it.key === '0') { this.say('0 — выход из goinstall в консоль.', '0 — quit goinstall to the shell.'); return; }
+    this.say('«' + (it.label || (it.p && it.p.name)) + '» — экран из прежнего пакета, здесь не повторён.', '“' + (it.label || (it.p && it.p.name)) + '” is in the earlier package, not repeated here.');
+  }
+  dAct(it) {
+    const { S } = this.state;
+    if (it.act === 'toggle') { this.setS({ on: !S.on }); this.say(S.on ? 'Вход выключен: сервер не блокирует, только считает.' : 'Вход включён: сканеры останавливаются.', S.on ? 'Inbound off: the server does not block, only counts.' : 'Inbound on: scanners are stopped.'); }
+    else if (it.act === 'vk') { this.setS({ vk: !S.vk }); this.say(S.vk ? 'Выход выключен: защита от утечки IP не работает.' : 'Выход включён: утечка IP к ВК не выпускается.', S.vk ? 'Outbound off: IP leak protection is not working.' : 'Outbound on: IP leak to VK is blocked.'); }
+    else if (it.act === 'stats') this.go('sh-e', { view:0, row:null });
+    else if (it.act === 'top') this.go('sh-g', { view:0, cur:0 });
+    else if (it.act === 'settings') this.go('sh-h', { cur:0, confirm:false, reset:false });
+    else if (it.act === 'back') this.back();
+    else this.say('«' + it.label + '» — экран вне этого задания.', '“' + it.label + '” is outside this brief.');
+  }
+  handleKey(k) {
+    const { S, cur, view } = this.state, GS = window.GoShield, GM = window.GoMenu;
+    if (!GS || !GM) return false;
+    const scr = S.scr;
+    if (k === 'q') { this.say('q — выход из goinstall.', 'q — quit goinstall.'); return true; }
+    if (scr === 'g') {
+      const m = GM.build(this.opts()), items = m.items, n = items.length;
+      if (k === 'ArrowUp') { this.setState({ cur:(cur + n - 1) % n }); return true; }
+      if (k === 'ArrowDown') { this.setState({ cur:(cur + 1) % n }); return true; }
+      if ((k === 'ArrowLeft' || k === 'ArrowRight') && items[cur] && items[cur].shield) { this.setState(s => ({ crow: Math.max(0, Math.min(6, s.crow + (k === 'ArrowLeft' ? -1 : 1))) })); return true; }
+      if (k === 'Enter') { this.menuAct(items[cur]); return true; }
+      if (k === 'Escape') { this.say('Esc — выход из goinstall.', 'Esc — quit goinstall.'); return true; }
+      const i = items.findIndex(x => x.key === k || x.hot === k);
+      if (i >= 0) { this.setState({ cur:i }); this.menuAct(items[i]); return true; }
+      return false;
+    }
+    if (scr === 'sh-d') {
+      const items = GS.menuItems({ lang:S.lang, on:S.on, vk:S.vk }), n = items.length;
+      if (k === 'ArrowUp') { this.setState({ cur:(cur + n - 1) % n }); return true; }
+      if (k === 'ArrowDown') { this.setState({ cur:(cur + 1) % n }); return true; }
+      if (k === 'ArrowLeft' || k === 'ArrowRight') { this.setState(s => ({ crow: Math.max(0, Math.min(6, s.crow + (k === 'ArrowLeft' ? -1 : 1))) })); return true; }
+      if (k === 'Enter') { this.dAct(items[cur]); return true; }
+      if (k === 'Escape') { this.back(); return true; }
+      const i = items.findIndex(x => x.key === k);
+      if (i >= 0) { this.setState({ cur:i }); this.dAct(items[i]); return true; }
+      return false;
+    }
+    if (scr === 'sh-e') {
+      const b = GS.build('sh-e', this.opts()), nr = b.nrows || 7, r0 = this.state.row == null ? nr - 1 : this.state.row;
+      if (k === '0' || k === 'Escape') { this.back(); return true; }
+      if (k === 'ArrowUp') { this.setState({ row: Math.max(0, r0 - 1) }); return true; }
+      if (k === 'ArrowDown') { this.setState({ row: Math.min(nr - 1, r0 + 1) }); return true; }
+      if (k === 'ArrowRight') { this.setState({ view:(view + 1) % 4, row:null }); return true; }
+      if (k === 'ArrowLeft') { this.setState({ view:(view + 3) % 4, row:null }); return true; }
+      if (k === '5') { this.go('sh-g', { cur:0 }); return true; }
+      if (k === '6') { this.go('sh-h', { cur:0, confirm:false, reset:false }); return true; }
+      const d = parseInt(k, 10);
+      if (d >= 1 && d <= 4) { this.setState({ view:d - 1, row:null }); return true; }
+      return false;
+    }
+    if (scr === 'sh-g') {
+      const page = S.cols >= 80 ? 15 : 6, mv = c => this.setState({ cur: Math.max(0, Math.min(29, c)) });
+      if (k === '0' || k === 'Escape') { this.back(); return true; }
+      if (k === 'ArrowUp') { mv(cur - 1); return true; }
+      if (k === 'ArrowDown') { mv(cur + 1); return true; }
+      if (k === 'PageUp') { mv(cur - page); return true; }
+      if (k === 'PageDown' || k === ' ') { mv(cur + page); return true; }
+      if (k === 'Home') { mv(0); return true; }
+      if (k === 'End') { mv(29); return true; }
+      if (k === 'ArrowRight') { this.setState({ view:(view + 1) % 4 }); return true; }
+      if (k === 'ArrowLeft') { this.setState({ view:(view + 3) % 4 }); return true; }
+      const d = parseInt(k, 10);
+      if (d >= 1 && d <= 4) { this.setState({ view:d - 1 }); return true; }
+      return false;
+    }
+    if (scr === 'sh-h') {
+      const { confirm, reset } = this.state;
+      if (confirm) {
+        if (k === '1' || (k === 'Enter' && cur === 0)) { this.setState({ confirm:false, reset:true, cur:1 }); return true; }
+        if (k === '2' || k === 'Escape' || k === 'Enter' || k === '0') { this.setState({ confirm:false, cur:0 }); return true; }
+        if (k === 'ArrowUp' || k === 'ArrowDown') { this.setState({ cur: cur ? 0 : 1 }); return true; }
+        return false;
+      }
+      if (k === '1' || (k === 'Enter' && cur === 0)) { this.setState({ confirm:true, cur:1 }); return true; }
+      if (k === '0' || k === 'Escape' || (k === 'Enter' && cur === 1)) { this.setState({ reset:false }); this.back(); return true; }
+      if (k === 'ArrowUp' || k === 'ArrowDown') { this.setState({ cur: cur ? 0 : 1 }); return true; }
+      return false;
+    }
+    return false;
+  }
+  style(tok, col, sel, S, C) {
+    const P = PAL[S.bg], bg = P.bg, fgDef = FG[S.bg];
+    let color, bold = false, back = null;
+    if (S.color === 'true' || S.color === '256') {
+      const T = P[tok] || P.text;
+      color = tok === 'grad' ? interp(P.grad, col / Math.max(1, C - 1)) : T.c; bold = !!T.b || tok === 'grad';
+      if (sel) { back = P.sel.bg; if (P.sel.fg && tok !== 'in' && tok !== 'out') color = P.sel.fg; }
+      if (S.color === '256') { color = q256(color).hex; if (back) back = q256(back).hex; }
+    } else if (S.color === '16') {
+      const T = A16[tok] || A16.text;
+      color = T.c === '39' ? fgDef : ANSI[S.bg][T.c]; bold = !!T.b;
+      if (T.dim) color = blend(color, bg, 0.45);
+      if (sel) { back = color; color = bg; }
+    } else {
+      const a = NONE[tok] || ''; color = fgDef; bold = a === 'bold';
+      if (a === 'dim') color = blend(fgDef, bg, 0.5);
+      if (sel) { back = fgDef; color = bg; }
+    }
+    const s = { color, fontWeight: bold ? 700 : 400, display: 'inline-block', width: '1ch', height: '17px', verticalAlign: 'top' };
+    if (back) s.background = back;
+    return s;
+  }
+  renderVals() {
+    const { S, ready } = this.state, GS = ready ? window.GoShield : null, GM = ready ? window.GoMenu : null;
+    const btn = (active, first, last) => ({ font: "500 12px 'IBM Plex Sans',sans-serif", padding: '5px 9px', border: '1px solid #c9c6bf', marginLeft: first ? 0 : -1, borderRadius: first && last ? 6 : first ? '6px 0 0 6px' : last ? '0 6px 6px 0' : 0, background: active ? '#1d1d1b' : '#ffffff', color: active ? '#ffffff' : '#1d1d1b', cursor: 'pointer', position: 'relative', zIndex: active ? 1 : 0, whiteSpace: 'nowrap' });
+    const GR = [
+      ['Ширина', 'cols', [[80, '80'], [46, '46']]],
+      ['Цвет', 'color', [['true', 'truecolor'], ['256', '256'], ['16', '16'], ['none', 'без цвета']]],
+      ['Фон', 'bg', [['dark', 'тёмный'], ['light', 'светлый']]],
+      ['Символы', 'cs', [['utf8', 'UTF-8'], ['ascii', 'ASCII']]],
+      ['Язык', 'lang', [['ru', 'RU'], ['en', 'EN']]],
+      ['Меню', 'layout', [['panels', 'две панели (g2)'], ['list', 'список (g1)']]],
+      ['Спарклайн в меню', 'variant', [['A', 'A · под списком'], ['B', 'B · в строке сведений']]],
+      ['График', 'chart', [['fly', 'пирамида'], ['bars', 'столбики']]],
+      ['Вход', 'on', [[true, 'вкл'], [false, 'выкл']]],
+      ['Выход (ВК)', 'vk', [[true, 'вкл'], [false, 'выкл']]],
+      ['Всплеск (sh-a)', 'spike', [[true, 'был'], [false, 'не было']]]
+    ];
+    const groups = GR.map(([label, k, opts]) => ({ label, opts: opts.map(([v, l], i) => ({ label: l, on: () => this.setS({ [k]: v }, k === 'cols' ? { row:null } : null), style: btn(S[k] === v, i === 0, i === opts.length - 1) })) }));
+    const jumps = JUMPS.map(([id, label]) => ({ id, label, on: () => this.setState({ back: [] }, () => this.setS({ scr: id }, { cur: id === 'g' ? 10 : 0, view: 0, row: null, confirm: false, reset: false, flash: '' })),
+      style: { display: 'flex', gap: 8, alignItems: 'baseline', textAlign: 'left', font: "400 13px 'IBM Plex Sans',sans-serif", padding: '5px 8px', border: 'none', borderRadius: 5, background: S.scr === id ? '#d6d3cc' : 'transparent', color: '#1d1d1b', cursor: 'pointer' } }));
+    const tokHead = ['токен', 'назначение', 'тёмный', 'светлый', '256 · тёмн / светл', 'ANSI-16', 'без цвета'];
+    const cell = (t, x) => ({ t, style: { padding: '6px 10px', borderBottom: '1px solid #e0ddd6', display: 'flex', gap: 6, alignItems: 'center', fontFamily: "'JetBrains Mono',monospace", fontSize: 12, whiteSpace: 'nowrap', ...(x || {}) }, sw: false });
+    const swc = (t, h) => ({ ...cell(t), sw: true, swStyle: { width: 12, height: 12, borderRadius: 3, background: h, border: '1px solid rgba(0,0,0,.2)', flex: '0 0 auto' } });
+    const tokCells = [];
+    [['in', 'вход: полосы слева, столбики, «← ВХОД»'], ['out', 'выход: полосы справа, «ВЫХОД →», светлее']].forEach(([k, d]) => tokCells.push(cell(k, { fontWeight: 700 }), cell(d, { fontFamily: "'IBM Plex Sans',sans-serif" }), swc(PAL.dark[k].c, PAL.dark[k].c), swc(PAL.light[k].c, PAL.light[k].c), cell(q256(PAL.dark[k].c).i + ' / ' + q256(PAL.light[k].c).i), cell(A16[k].c), cell('обычный')));
+    const base = { groups, jumps, noFocus: e => e.preventDefault(), tokHead, tokCells, symbols: NEWSYM.map(u => ({ u, a: (GS && GS.ASCII_NEW[u]) || ASC[u] || '' })) };
+    if (!GS || !GM) return { ...base, rows: [], keymap: [], termLabel: 'загрузка…', boardStyle: {}, gridStyle: {}, hasFlash: false, flash: '', hasChanges: false, changes: [], showJson: false, json: '', jsonBtn: 'JSON этого экрана', toggleJson: () => {}, downloadAll: () => {} };
+    const o = this.opts();
+    let comp, changes = [];
+    if (S.scr === 'g') {
+      const lay = S.cols >= 80 ? S.layout : 'list';
+      const mo = { ...o, layout: lay, row: this.state.crow };
+      comp = GM.build(mo); comp.label = lay === 'panels' ? 'Главное меню · две панели (g2)' : 'Главное меню · список (g1)';
+      const id = lay === 'panels' ? 'g2' : 'g1';
+      const always = GM.diff({ ...mo, cur: 0 }), onS = GM.diff({ ...mo, cur: GM.sIndex });
+      changes = ['Версия: строка 1' + (lay === 'list' && S.cols >= 80 ? ' и пункт u (строка 18)' : '') + ' — 1.2.3 вместо 0.9.5, обновление 1.2.3 → 1.2.4.'];
+      if (id === 'g1' && S.cols >= 80) changes.push('g1 · 80: в эталоне нет пунктов c, s, x — добавлены как в g1 · 46 и g2 (строки 16, 17, 19); пустая строка перед замечаниями убрана, замечания — строки 21–22; в подсказке клавиш (24) добавлена «s».');
+      changes.push('Защита, всегда: ' + (always.length ? 'строка ' + ranges(always) : 'нет') + (S.variant === 'A' ? ' — спарклайны «вход / выход» под списком.' : ' — спарклайны в строке сведений.'));
+      changes.push('Защита, курсор на s: ' + ranges(onS) + (id === 'g2' ? ' — карточка справа (пирамида или столбики, сутки / 7 дней, числа выбранного дня).' : ' — две строки счётчиков вместо описания продукта.'));
+      changes.push('Остальные строки совпадают с эталоном ' + id + ' · ' + S.cols + ' клетка в клетку.');
+    } else comp = GS.build(S.scr, o);
+    const ascii = S.cs === 'ascii', full = { ...ASC, ...GS.ASCII_NEW };
+    const rows = comp.rows.map(rw => {
+      const spans = []; let col = 0;
+      for (const s of rw.segs) for (const ch of [...s[0]]) { spans.push({ t: ascii && full[ch] != null ? full[ch] : ch, style: this.style(s[1], col, rw.sel || s[2], S, comp.C) }); col++; }
+      return { spans };
+    });
+    const bgc = PAL[S.bg].bg;
+    let json = '';
+    if (this.state.showJson) {
+      const j = S.scr === 'g' ? GM.toJSON({ ...o, layout: S.cols >= 80 ? S.layout : 'list', row: this.state.crow }, S.cols >= 80 && S.layout === 'panels' ? 'g2' : 'g1') : GS.toJSON(S.scr, o, S.scr === 'sh-e' || S.scr === 'sh-g' ? GS.PERIODS[this.state.view] : 'live');
+      json = JSON.stringify(j, null, 1);
+    }
+    return { ...base, rows,
+      keymap: comp.keymap.map(([k, d]) => ({ k, d })),
+      hasChanges: changes.length > 0, changes,
+      termLabel: `${S.scr === 'g' ? (S.cols >= 80 && S.layout === 'panels' ? 'g2' : 'g1') : S.scr} · ${comp.label} · ${comp.C} × ${comp.R} · ${S.color === 'true' ? 'truecolor' : S.color === 'none' ? 'без цвета' : S.color + ' цветов'} · ${ascii ? 'ASCII' : 'UTF-8'} · фон ${bgc}`,
+      boardStyle: { background: bgc, padding: '14px 16px', borderRadius: 8, border: '1px solid ' + (S.bg === 'dark' ? '#0e0e0e' : '#c9c6bf'), fontFamily: "'JetBrains Mono', Menlo, Consolas, monospace", fontSize: 14, lineHeight: '17px', color: FG[S.bg], boxShadow: '0 1px 2px rgba(0,0,0,.08)', overflowX: 'auto', overflowY: 'hidden', maxWidth: '100%', boxSizing: 'border-box' },
+      gridStyle: { width: comp.C + 'ch', height: comp.R * 17 + 'px' },
+      hasFlash: !!this.state.flash, flash: this.state.flash,
+      showJson: this.state.showJson, json,
+      jsonBtn: this.state.showJson ? 'Скрыть JSON экрана' : 'JSON этого экрана',
+      toggleJson: () => this.setState(s => ({ showJson: !s.showJson })),
+      downloadAll: () => {
+        const data = { shield_ru: GS.all('ru'), shield_en: GS.all('en'), menu_ru: GM.all('ru'), menu_en: GM.all('en'), ascii_new: GS.ASCII_NEW };
+        const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'goinstaller-1.2.3-shield-screens-arcade.json'; a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

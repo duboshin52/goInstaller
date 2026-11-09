@@ -1,0 +1,27 @@
+{
+ "arcade": [
+  {
+   "token": "in",
+   "desc": "вход: полосы пирамиды слева, столбики входа, «← ВХОД»",
+   "truecolor_dark": "#1fb6ff",
+   "truecolor_light": "#0068a8",
+   "bold": false,
+   "xterm256_dark": 39,
+   "xterm256_light": 25,
+   "ansi16": "36",
+   "no_color": "обычный"
+  },
+  {
+   "token": "out",
+   "desc": "выход: полосы справа, столбики выхода, «ВЫХОД →» — светлый тон того же цвета",
+   "truecolor_dark": "#9fe3ff",
+   "truecolor_light": "#4a97c9",
+   "bold": false,
+   "xterm256_dark": 153,
+   "xterm256_light": 68,
+   "ansi16": "96",
+   "no_color": "обычный"
+  }
+ ],
+ "note": "Сетка ┊ — токен shadow (тусклый). Без цвета вход и выход различаются стороной, стрелкой и подписью."
+}
